@@ -1,0 +1,60 @@
+---
+import "@/styles/global.css"
+import ThemeToggle from "@/components/ThemeToggle.astro"
+import { site } from "@/data/site"
+
+interface Props {
+  title?: string
+  description?: string
+}
+
+const { title, description = site.description } = Astro.props
+const pageTitle = title ? `${title} — ${site.name}` : site.name
+const canonical = new URL(Astro.url.pathname, site.url).toString()
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content={site.name} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+
+    {/* Inline, blocking theme script — runs before paint to prevent FOUC. */}
+    <script is:inline>
+      ;(() => {
+        try {
+          const stored = localStorage.getItem("theme")
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+          const isDark = stored ? stored === "dark" : prefersDark
+          if (isDark) document.documentElement.classList.add("dark")
+        } catch {
+          /* localStorage may be unavailable; silently fall back to CSS. */
+        }
+      })()
+    </script>
+  </head>
+
+  <body class="min-h-svh">
+    <ThemeToggle />
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,65 @@
+---
+/*
+ * Pure typography theme toggle.
+ *
+ * Three states cycled by click: auto → light → dark → auto.
+ * - "auto"  → no localStorage entry, follow system preference
+ * - "light" → localStorage.theme = "light", force light
+ * - "dark"  → localStorage.theme = "dark", force dark
+ *
+ * The <html class="dark"> swap is handled here for client-side toggles;
+ * the no-FOUC paint-blocking script lives in main.astro <head>.
+ */
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  aria-label="Toggle color theme"
+  class="fixed top-5 right-5 z-50 font-mono text-xs lowercase tracking-wide text-muted-foreground transition-colors duration-150 hover:text-foreground focus-visible:text-foreground"
+>
+  <span data-theme-label>auto</span>
+</button>
+
+<script is:inline>
+  ;(() => {
+    const button = document.getElementById("theme-toggle")
+    if (!button) return
+    const label = button.querySelector("[data-theme-label]")
+    if (!label) return
+
+    /** @type {("auto"|"light"|"dark")[]} */
+    const order = ["auto", "light", "dark"]
+
+    const getState = () => {
+      const stored = localStorage.getItem("theme")
+      if (stored === "light" || stored === "dark") return stored
+      return "auto"
+    }
+
+    const apply = (state) => {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+      const isDark = state === "dark" || (state === "auto" && prefersDark)
+      document.documentElement.classList.toggle("dark", isDark)
+
+      if (state === "auto") localStorage.removeItem("theme")
+      else localStorage.setItem("theme", state)
+
+      label.textContent = state
+    }
+
+    apply(getState())
+
+    button.addEventListener("click", () => {
+      const current = getState()
+      const next = order[(order.indexOf(current) + 1) % order.length]
+      apply(next)
+    })
+
+    /* Track system changes while in auto mode. */
+    const media = window.matchMedia("(prefers-color-scheme: dark)")
+    media.addEventListener("change", () => {
+      if (getState() === "auto") apply("auto")
+    })
+  })()
+</script>

@@ -1,0 +1,48 @@
+---
+import { site } from "@/data/site"
+import Layout from "@/layouts/main.astro"
+---
+
+<Layout>
+  <main
+    class="flex min-h-svh flex-col justify-end px-[clamp(1.5rem,4vw,4rem)] pt-24 pb-[clamp(1.5rem,4vw,4rem)]"
+  >
+    <h1
+      class="font-medium leading-none tracking-tighter"
+      style="font-size: clamp(3.5rem, 9vw, 7rem); letter-spacing: -0.04em;"
+    >
+      {site.name}
+    </h1>
+
+    <p class="mt-4 max-w-[38ch] text-[15px] text-muted-foreground">
+      {site.bio}
+    </p>
+
+    <ul class="mt-10 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+      {
+        site.links.map((link) => {
+          const isExternal = link.href.startsWith("http")
+          return (
+            <li>
+              <a
+                href={link.href}
+                rel={isExternal ? "noopener noreferrer me" : undefined}
+                target={isExternal ? "_blank" : undefined}
+                class="group inline-flex items-baseline gap-1 text-foreground transition-colors hover:text-muted-foreground"
+              >
+                <span class="underline decoration-border decoration-1 underline-offset-[5px] transition-colors group-hover:decoration-foreground">
+                  {link.label}
+                </span>
+                {isExternal && (
+                  <span aria-hidden="true" class="text-muted-foreground">
+                    ↗
+                  </span>
+                )}
+              </a>
+            </li>
+          )
+        })
+      }
+    </ul>
+  </main>
+</Layout>

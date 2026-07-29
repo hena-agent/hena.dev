@@ -13,10 +13,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: [
-        "hena-dev.localhost",
-        ".pug-mohs.ts.net",
-      ],
+      allowedHosts: ["hena-dev.localhost", ".pug-mohs.ts.net"],
     },
   },
   integrations: [react()],

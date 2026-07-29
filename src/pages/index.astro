@@ -22,8 +22,10 @@ import Layout from "@/layouts/main.astro"
       {
         site.links.map((link) => {
           const isExternal = link.href.startsWith("http")
+          const isHidden =
+            link.label === "GitHub" || link.label === "X" || link.label === "Bluesky"
           return (
-            <li>
+            <li class={isHidden ? "hidden" : undefined}>
               <a
                 href={link.href}
                 rel={isExternal ? "noopener noreferrer me" : undefined}

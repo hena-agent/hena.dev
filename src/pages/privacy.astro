@@ -1,0 +1,77 @@
+---
+import { site } from "@/data/site"
+import Layout from "@/layouts/main.astro"
+---
+
+<Layout title="Privacy" description="How Ambivalent Co. handles Hena waitlist information.">
+  <header class="legal-header">
+    <a class="wordmark" href="/" aria-label="Hena home">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <span>Hena</span>
+    </a>
+    <a href="/">Back to home</a>
+  </header>
+  <main id="main-content" class="legal-page">
+    <p class="kicker"><span>Legal</span> Last updated September 5, 2026</p>
+    <h1>Privacy at Hena.</h1>
+    <p class="legal-intro">
+      Ambivalent Co. operates Hena and hena.dev. This notice explains the information we collect
+      for the Hena waitlist and how you can control it.
+    </p>
+
+    <section>
+      <h2>Information we collect</h2>
+      <p>
+        When you join the waitlist, we collect the email address you submit, your consent version,
+        subscription status, and timestamps related to registration or unsubscription. Cloudflare
+        Turnstile also processes technical information needed to distinguish people from automated
+        abuse. We do not ask for your name, company, or payment information.
+      </p>
+    </section>
+
+    <section>
+      <h2>How we use it</h2>
+      <p>
+        We use your email only to confirm registration and send meaningful Hena beta and launch
+        updates. We do not sell your information or use the waitlist for third-party advertising.
+      </p>
+    </section>
+
+    <section>
+      <h2>Service providers</h2>
+      <p>
+        Cloudflare hosts this site, protects the form with Turnstile, stores waitlist records in D1,
+        and provides privacy-focused aggregate analytics. Resend delivers registration and launch
+        emails. These providers process information on our behalf under their own security and
+        privacy commitments.
+      </p>
+    </section>
+
+    <section>
+      <h2>Retention and deletion</h2>
+      <p>
+        We keep waitlist records for as long as needed to provide beta and launch updates. You may
+        unsubscribe through the link in any email. To request deletion of the record itself, email
+        <a href={`mailto:${site.email}`}>{site.email}</a>. We may retain minimal records when
+        required to honor an unsubscribe request or meet legal obligations.
+      </p>
+    </section>
+
+    <section>
+      <h2>Your choices</h2>
+      <p>
+        Joining is optional. You can unsubscribe at any time without affecting access to the public
+        website or open-source software. You may also ask to access, correct, or delete your
+        waitlist information by contacting us.
+      </p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>
+        Ambivalent Co.<br />
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+      </p>
+    </section>
+  </main>
+</Layout>

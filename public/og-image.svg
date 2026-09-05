@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#11120f"/>
+  <path stroke="#292c25" d="M0 105h1200M0 210h1200M0 315h1200M0 420h1200M0 525h1200M200 0v630M400 0v630M600 0v630M800 0v630M1000 0v630"/>
+  <rect x="72" y="68" width="52" height="52" rx="10" fill="#c8ff36"/>
+  <path fill="#11120f" d="M86 80h8v11h9V80h8v29h-8V98h-9v11h-8z"/>
+  <text x="140" y="106" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="28" font-weight="700">Hena</text>
+  <text x="72" y="280" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-4">One workspace for</text>
+  <text x="72" y="366" fill="#f2f3ed" font-family="Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-4">chat, code, and</text>
+  <text x="72" y="452" fill="#a5a89d" font-family="Arial, sans-serif" font-size="76" font-weight="600" letter-spacing="-4">autonomous work.</text>
+  <circle cx="78" cy="548" r="6" fill="#c8ff36"/>
+  <text x="98" y="555" fill="#a5a89d" font-family="monospace" font-size="18" letter-spacing="2">DESKTOP BETA · SEPTEMBER 2026</text>
+</svg>

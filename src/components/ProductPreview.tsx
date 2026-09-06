@@ -2,11 +2,15 @@ import {
   Braces,
   Check,
   ChevronDown,
+  Clock3,
+  FileText,
+  Folder,
   Globe2,
   MessageSquareText,
   Pause,
   Play,
   Plus,
+  Repeat2,
   RotateCcw,
 } from "lucide-react"
 import { useEffect, useId, useRef, useState } from "react"
@@ -17,7 +21,13 @@ import {
 } from "@/components/ai-elements/conversation"
 import { Message, MessageContent } from "@/components/ai-elements/message"
 import { usePreviewPlayback } from "@/components/usePreviewPlayback"
-import { type PreviewProject, type PreviewStep, projects, streamedText } from "@/data/preview"
+import {
+  invoiceTasks,
+  type PreviewProject,
+  type PreviewStep,
+  projects,
+  streamedText,
+} from "@/data/preview"
 import { cn } from "@/lib/utils"
 
 const icons = { chat: MessageSquareText, code: Braces, claw: Globe2 }
@@ -152,7 +162,10 @@ function ProjectPanel({
       aria-labelledby={`${baseId}-project-${project.id}`}
       hidden={activeIndex !== projectIndex}
     >
-      <aside className="preview-sidebar" aria-label={`${project.name} sessions`}>
+      <aside
+        className="preview-sidebar"
+        aria-label={`${project.name} ${project.id === "claw" ? "routines" : "sessions"}`}
+      >
         <div className="project-heading">
           <div>
             <strong>{project.name}</strong>
@@ -161,11 +174,11 @@ function ProjectPanel({
           <span className="project-mode">{project.label}</span>
         </div>
         <button className="sidebar-new" type="button" disabled>
-          <span>New session</span>
+          <span>{project.id === "claw" ? "New routine" : "New session"}</span>
           <kbd>⌘ K</kbd>
         </button>
-        <nav aria-label="Sessions">
-          <p className="sidebar-label">Recent</p>
+        <nav aria-label={project.id === "claw" ? "Routines" : "Sessions"}>
+          <p className="sidebar-label">{project.id === "claw" ? "Routines" : "Recent"}</p>
           {project.sessions.map((session, index) => (
             <span
               className={cn("sidebar-session", index === 0 && "sidebar-session--active")}
@@ -231,52 +244,223 @@ function ProjectPanel({
             </button>
           </div>
         </div>
-        <Conversation className="session-thread" key={`${project.id}-${playback.run}`}>
-          <ConversationContent>
-            <Message from="user">
-              <MessageContent>
-                <span className="message-avatar">SK</span>
-                <div>
-                  <p className="message-author">You</p>
-                  <p>{project.title}</p>
-                </div>
-              </MessageContent>
-            </Message>
-            <Message from="assistant">
-              <MessageContent>
-                <span className="message-avatar message-avatar--hena">H</span>
-                <div>
-                  <p className="message-author">Hena</p>
-                  <Activity
-                    project={project}
-                    stageIndex={playback.stageIndex}
-                    stepIndex={playback.stepIndex}
-                    stepProgress={playback.stepProgress}
-                    complete={playback.isComplete}
-                    paused={playback.isPaused}
-                  />
-                </div>
-              </MessageContent>
-            </Message>
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
+        {project.id === "claw" ? (
+          <ClawAutomation
+            stageIndex={playback.stageIndex}
+            stepIndex={playback.stepIndex}
+            stepProgress={playback.stepProgress}
+            complete={playback.isComplete}
+            paused={playback.isPaused}
+          />
+        ) : (
+          <Conversation className="session-thread" key={`${project.id}-${playback.run}`}>
+            <ConversationContent>
+              <Message from="user">
+                <MessageContent>
+                  <span className="message-avatar">SK</span>
+                  <div>
+                    <p className="message-author">You</p>
+                    <p>{project.title}</p>
+                  </div>
+                </MessageContent>
+              </Message>
+              <Message from="assistant">
+                <MessageContent>
+                  <span className="message-avatar message-avatar--hena">H</span>
+                  <div>
+                    <p className="message-author">Hena</p>
+                    <Activity
+                      project={project}
+                      stageIndex={playback.stageIndex}
+                      stepIndex={playback.stepIndex}
+                      stepProgress={playback.stepProgress}
+                      complete={playback.isComplete}
+                      paused={playback.isPaused}
+                    />
+                  </div>
+                </MessageContent>
+              </Message>
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+        )}
         <span className="sr-only" aria-live="polite">
           {announcement}
         </span>
-        <div className="composer" aria-hidden="true">
-          <span>
-            {project.id === "claw" && !playback.isComplete
-              ? "Steer the running task…"
-              : "Continue this session…"}
-          </span>
-          <div className="composer-controls">
-            <span>{project.label} agent</span>
-            <span className="composer-submit">↑</span>
+        {project.id === "claw" ? (
+          <div className="claw-next-run">
+            <Clock3 size={14} aria-hidden="true" />
+            <span>
+              Next run <strong>Fri, Sep 11 · 09:00 KST</strong>
+            </span>
+            <Repeat2 size={14} aria-hidden="true" />
           </div>
-        </div>
+        ) : (
+          <div className="composer" aria-hidden="true">
+            <span>Continue this session…</span>
+            <div className="composer-controls">
+              <span>{project.label} agent</span>
+              <span className="composer-submit">↑</span>
+            </div>
+          </div>
+        )}
       </section>
     </div>
+  )
+}
+
+export function ClawAutomation({
+  stageIndex,
+  stepIndex,
+  stepProgress = 0,
+  complete,
+  paused,
+}: {
+  stageIndex: number
+  stepIndex: number
+  stepProgress?: number
+  complete: boolean
+  paused: boolean
+}) {
+  const processed = invoiceTasks.filter(
+    (task) =>
+      complete ||
+      stageIndex > task.stageIndex ||
+      (stageIndex === task.stageIndex && stepIndex > task.stepIndex),
+  )
+  const activeTask = !complete ? invoiceTasks.find((task) => !processed.includes(task)) : undefined
+  const taskProgress =
+    activeTask && stageIndex === activeTask.stageIndex && stepIndex === activeTask.stepIndex
+      ? stepProgress
+      : 0
+  const activity = activeTask
+    ? activeTask.activity[Math.min(2, Math.floor(taskProgress * 3))]
+    : stepIndex < 2
+      ? "Saving the monthly folder"
+      : "Preparing the exception note"
+  const saved = processed.filter((task) => task.result === "Saved").length
+  const skipped = processed.filter((task) => task.result === "Skipped").length
+  const attention = processed.filter((task) => task.result === "Needs attention").length
+  return (
+    <section
+      className={cn("claw-automation", complete && "is-complete", paused && "is-paused")}
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: Keep overflow keyboard-accessible at enlarged text sizes.
+      tabIndex={0}
+      aria-label="Invoice automation run"
+    >
+      <div className="claw-routine">
+        <div className="claw-eyebrow">
+          <Repeat2 size={13} aria-hidden="true" /> Saved routine <span>Simulation</span>
+        </div>
+        <div className="claw-schedule">
+          <Clock3 size={13} aria-hidden="true" /> Every Friday · 09:00 KST
+        </div>
+      </div>
+      <div className={cn("claw-run-banner", complete && "is-complete")}>
+        <div className="claw-run-banner__heading">
+          <span className="claw-run-banner__icon" aria-hidden="true">
+            {complete ? <Check size={22} /> : paused ? <Pause size={20} /> : <Repeat2 size={20} />}
+          </span>
+          <div>
+            <span className="claw-eyebrow">
+              {complete ? "Scheduled run complete" : paused ? "Run paused" : "Working for you"}
+            </span>
+            <h3>{complete ? "Friday admin, handled." : activity}</h3>
+          </div>
+        </div>
+        {complete ? (
+          <dl
+            className="claw-outcome"
+            aria-label={`${saved} saved · ${skipped} skipped · ${attention} needs attention`}
+          >
+            <div>
+              <dd>{saved}</dd>
+              <dt>PDFs saved</dt>
+            </div>
+            <div>
+              <dd>{skipped}</dd>
+              <dt>Duplicate skipped</dt>
+            </div>
+            <div>
+              <dd>{attention}</dd>
+              <dt>Needs attention</dt>
+            </div>
+          </dl>
+        ) : (
+          <div className="claw-live-summary">
+            <span>
+              {activeTask ? `${processed.length + 1} of 4 services` : "Finishing this run"}
+            </span>
+            <span>{saved} PDFs saved</span>
+            <span className="claw-live-meter" aria-hidden="true">
+              <span
+                style={{
+                  width: `${activeTask ? Math.max(5, taskProgress * 100) : Math.max(5, stepProgress * 100)}%`,
+                }}
+              />
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="claw-run-heading">
+        <div>
+          <strong>Sep 04</strong>
+          <span>09:00 · Scheduled run</span>
+        </div>
+        <span>
+          {processed.length} / {invoiceTasks.length} checked
+        </span>
+      </div>
+      <ul className="claw-task-list" aria-label="Invoice collection status">
+        {invoiceTasks.map((task) => {
+          const done = processed.includes(task)
+          const running = task === activeTask
+          const status = done ? task.result : running ? (paused ? "Paused" : "Checking") : "Waiting"
+          return (
+            <li
+              key={task.name}
+              className={cn(
+                "claw-task",
+                running && "is-current",
+                done && task.result === "Needs attention" && "needs-attention",
+              )}
+            >
+              <span className="claw-task-icon" aria-hidden="true">
+                {done && task.result === "Saved" ? <Check size={15} /> : <FileText size={15} />}
+              </span>
+              <div>
+                <strong>{task.name}</strong>
+                <small>{done ? task.file : running ? activity : "Monthly invoice"}</small>
+              </div>
+              <span className="claw-task-status">
+                {running && !paused && (
+                  <span className="preview-tool__spinner" aria-hidden="true" />
+                )}
+                {status}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      <div className="claw-run-result">
+        <Folder size={16} aria-hidden="true" />
+        <div>
+          <strong>{complete ? "Monthly folder ready" : "Saving to your monthly folder"}</strong>
+          <span>Finance / Invoices / 2026-09</span>
+        </div>
+      </div>
+      {complete && (
+        <p className="claw-exception">
+          Only follow-up: Design tools has not issued its invoice yet.
+        </p>
+      )}
+      <div className="claw-history">
+        <span>Previous run · Aug 28</span>
+        <span>
+          <Check size={12} aria-hidden="true" /> 4 invoices filed
+        </span>
+      </div>
+    </section>
   )
 }
 
@@ -484,14 +668,5 @@ function CompletionArtifact({ project }: { project: PreviewProject }) {
       </section>
     )
   }
-  return (
-    <div className="claw-digest">
-      <div className="artifact-heading">
-        <span className="completion-badge">Ready</span>
-        <strong>Weekly digest ready</strong>
-      </div>
-      <p>New team controls and expanded usage reporting were announced.</p>
-      <span>Source: release-notes.example, simulated</span>
-    </div>
-  )
+  return null
 }

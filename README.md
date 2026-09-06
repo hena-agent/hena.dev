@@ -21,13 +21,18 @@ bun test
 ## Product preview
 
 The Chat, Code, and Claw projects play deterministic, browser-only demonstrations defined in
-`src/data/preview.ts`. Messages, test results, and browser sources are simulated; the preview
-does not call model APIs or store conversations.
+`src/data/preview.ts`. Messages, test results, invoice files, and run history are simulated;
+the preview does not call model APIs, download invoices, or schedule real jobs.
+Claw shows a saved weekly invoice routine with per-service progress, duplicate handling,
+missing-invoice flags, and the next scheduled run rather than a chat transcript.
 
 Each project starts once when visible and preserves its progress when switching projects.
 Pause, Resume, and Replay control playback. Leaving the viewport or hiding the browser tab
-pauses playback; reduced-motion users see the completed example instead. Scrolling up stops
-automatic following until the user returns to the latest activity.
+pauses playback; reduced-motion users see the completed example instead. In Chat and Code,
+scrolling up stops automatic following until the user returns to the latest activity.
+Claw starts processing immediately, shows per-invoice activity and progress, and finishes
+with a highlighted result summary. The taller preview fits its task list and results without
+internal scrolling at standard text sizes; keyboard scrolling remains available when zoomed.
 
 The conversation and message primitives in `src/components/ai-elements/` are adapted from
 Vercel AI Elements under Apache-2.0, with the license and modification notice alongside them.

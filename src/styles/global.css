@@ -476,7 +476,7 @@
   flex-direction: column;
   overflow: hidden;
   width: 100%;
-  height: 52rem;
+  height: 44rem;
   min-height: 0;
   margin-inline: auto;
   border: 1px solid var(--border);
@@ -2605,7 +2605,7 @@ kbd {
   }
 
   .product-preview {
-    height: 56rem;
+    height: 48rem;
     min-height: 0;
     border-radius: 0.7rem;
   }
@@ -2774,7 +2774,7 @@ kbd {
 
 @media (max-width: 24rem) {
   .product-preview {
-    height: 59rem;
+    height: 52rem;
   }
 
   .claw-automation {

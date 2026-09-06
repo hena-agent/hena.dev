@@ -8,6 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "cf:whoami": "node node_modules/wrangler/bin/wrangler.js whoami",
+    "cf:dev": "node node_modules/wrangler/bin/wrangler.js pages dev",
     "typecheck": "tsgo --noEmit",
     "lint": "biome lint .",
     "format": "biome format --write .",

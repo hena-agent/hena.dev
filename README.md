@@ -35,7 +35,8 @@ Only `use-stick-to-bottom` is added at runtime; no AI SDK or Markdown rendering 
 
 ## Waitlist infrastructure
 
-`wrangler.jsonc` targets the existing `hena-dev` Pages project in the **chris** account.
+`wrangler.jsonc` targets the existing `hena-dev` Pages project. Select the **chris** account
+with `CLOUDFLARE_ACCOUNT_ID`; Pages configuration does not support `account_id`.
 Its compatibility date matches the existing production and preview settings.
 The configuration is not yet waitlist-ready: D1 access is currently blocked by token
 permissions, and no `DB` binding or runtime secrets have been provisioned.
@@ -46,8 +47,15 @@ Do not deploy the waitlist until the setup below is complete.
 Use a scoped Cloudflare API Token through `CLOUDFLARE_API_TOKEN`, never in this repository.
 If using a local shell file containing the export, source it in the same terminal before
 running commands. `bun run cf:whoami` explicitly uses the installed Wrangler 4 rather
-than a potentially outdated global binary. `account_id` pins resource commands to chris;
-do not override it with a different `CLOUDFLARE_ACCOUNT_ID`.
+than a potentially outdated global binary. Set the following in the same terminal before
+running resource or deployment commands to avoid using a cached account:
+
+```sh
+export CLOUDFLARE_ACCOUNT_ID=0c789b636217d3b7562fb404aa580b58
+```
+
+GitHub Actions supplies this environment variable through the existing
+`CLOUDFLARE_ACCOUNT_ID` repository secret.
 
 The token needs **Account / Cloudflare Pages / Edit** and **Account / D1 / Edit** for
 the chris account. A successful `whoami` does not prove those permissions are present.

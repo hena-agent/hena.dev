@@ -15,7 +15,23 @@ The static site can be checked with:
 bun run check
 bun run typecheck
 bun run build
+bun test
 ```
+
+## Product preview
+
+The Chat, Code, and Claw projects play deterministic, browser-only demonstrations defined in
+`src/data/preview.ts`. Messages, test results, and browser sources are simulated; the preview
+does not call model APIs or store conversations.
+
+Each project starts once when visible and preserves its progress when switching projects.
+Pause, Resume, and Replay control playback. Leaving the viewport or hiding the browser tab
+pauses playback; reduced-motion users see the completed example instead. Scrolling up stops
+automatic following until the user returns to the latest activity.
+
+The conversation and message primitives in `src/components/ai-elements/` are adapted from
+Vercel AI Elements under Apache-2.0, with the license and modification notice alongside them.
+Only `use-stick-to-bottom` is added at runtime; no AI SDK or Markdown rendering stack is needed.
 
 ## Waitlist infrastructure
 

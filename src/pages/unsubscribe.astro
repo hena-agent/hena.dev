@@ -1,0 +1,20 @@
+---
+import { UnsubscribeForm } from "@/components/UnsubscribeForm"
+import Layout from "@/layouts/main.astro"
+---
+
+<Layout title="Unsubscribe" description="Manage your Hena launch updates." noindex>
+  <header class="legal-header">
+    <a class="wordmark" href="/" aria-label="Hena home">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <span>Hena</span>
+    </a>
+    <a href="/">Back to home</a>
+  </header>
+  <main id="main-content" class="unsubscribe-page">
+    <p class="kicker"><span>Email preferences</span></p>
+    <h1>Leave the Hena waitlist.</h1>
+    <p>You will no longer receive beta or launch updates at the address linked to this email.</p>
+    <UnsubscribeForm client:load />
+  </main>
+</Layout>

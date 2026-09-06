@@ -10,11 +10,16 @@ dist/
 .vercel/
 .netlify/
 .wrangler/
+wrangler.local.jsonc
+.playwright-mcp/
 
 # environment
 .env
 .env.*
 !.env.example
+.dev.vars*
+!.dev.vars.example
+.cloudflare
 
 # logs
 npm-debug.log*

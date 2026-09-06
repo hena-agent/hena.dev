@@ -6,11 +6,40 @@ import { site } from "@/data/site"
 interface Props {
   title?: string
   description?: string
+  image?: string
+  noindex?: boolean
 }
 
-const { title, description = site.description } = Astro.props
-const pageTitle = title ? `${title} — ${site.name}` : site.name
+const {
+  title,
+  description = site.description,
+  image = "/og-image.png",
+  noindex = false,
+} = Astro.props
+const pageTitle = title ? `${title} — ${site.name}` : site.title
 const canonical = new URL(Astro.url.pathname, site.url).toString()
+const socialImage = new URL(image, site.url).toString()
+const analyticsToken = import.meta.env.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN
+const analyticsEnabled = analyticsToken && !Astro.url.pathname.startsWith("/unsubscribe")
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: site.name,
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "macOS, Windows, Linux",
+  description,
+  url: site.url,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    availability: "https://schema.org/PreOrder",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: site.company,
+  },
+}
 ---
 
 <!doctype html>
@@ -23,20 +52,37 @@ const canonical = new URL(Astro.url.pathname, site.url).toString()
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="/favicon.png" />
+    {noindex && <meta name="robots" content="noindex" />}
 
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f7f7f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0d0b" media="(prefers-color-scheme: dark)" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:site_name" content={site.name} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    {
+      analyticsEnabled && (
+        <script
+          is:inline
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: analyticsToken })}
+        />
+      )
+    }
 
     {/* Inline, blocking theme script — runs before paint to prevent FOUC. */}
     <script is:inline>
@@ -53,7 +99,8 @@ const canonical = new URL(Astro.url.pathname, site.url).toString()
     </script>
   </head>
 
-  <body class="min-h-svh">
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <ThemeToggle />
     <slot />
   </body>

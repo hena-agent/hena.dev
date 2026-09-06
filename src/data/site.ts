@@ -1,20 +1,12 @@
-/**
- * Single source of truth for site content.
- * Edit this file to update the homepage.
- */
-
 export const site = {
   url: "https://hena.dev",
   name: "Hena",
-  bio: "Quietly building on the web.",
-  description: "Hena — quietly building on the web.",
+  title: "Hena — One workspace for chat, code, and autonomous work",
+  description:
+    "A local, open-source AI workspace that routes every task to the right model. Desktop beta arrives September 2026.",
   email: "hi@hena.dev",
-  links: [
-    { label: "GitHub", href: "https://github.com/hena-dev" },
-    { label: "X", href: "https://x.com/hena_dev" },
-    { label: "Bluesky", href: "https://bsky.app/profile/hena.dev" },
-    { label: "Email", href: "mailto:hi@hena.dev" },
-  ],
+  launch: "September 2026",
+  company: "Ambivalent Co.",
+  consentVersion: "2026-09-05",
+  githubUrl: null,
 } as const
-
-export type SiteLink = (typeof site.links)[number]

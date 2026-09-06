@@ -1,0 +1,5 @@
+TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+RESEND_API_KEY=re_your_resend_api_key
+RESEND_FROM_EMAIL=Hena <updates@hena.dev>
+SITE_URL=http://localhost:8788
+CONSENT_VERSION=2026-09-05

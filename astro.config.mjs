@@ -1,11 +1,13 @@
 // @ts-check
 
 import react from "@astrojs/react"
+import sitemap from "@astrojs/sitemap"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "astro/config"
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://hena.dev",
   server: {
     port: process.env.PORT ? Number(process.env.PORT) : 4321,
     host: process.env.HOST ?? "127.0.0.1",
@@ -16,5 +18,10 @@ export default defineConfig({
       allowedHosts: ["hena-dev.localhost", ".pug-mohs.ts.net"],
     },
   },
-  integrations: [react()],
+  integrations: [
+    react(),
+    sitemap({
+      filter: (page) => !page.endsWith("/unsubscribe/"),
+    }),
+  ],
 })

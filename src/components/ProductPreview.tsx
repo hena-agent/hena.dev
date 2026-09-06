@@ -148,8 +148,28 @@ function ProjectPanel({
   const Icon = icons[project.id]
   const hostRef = useRef<HTMLElement>(null)
   const playback = usePreviewPlayback(project, hostRef, active)
+  const [codeSurface, setCodeSurface] = useState<"session" | "changes">("session")
   const currentStage = project.stages[playback.stageIndex]
   const currentStep = currentStage.steps[playback.stepIndex]
+  const selectCodeSurface = (surface: "session" | "changes", focus = false) => {
+    setCodeSurface(surface)
+    if (focus) document.getElementById(`${baseId}-code-${surface}-tab`)?.focus()
+  }
+  const handleCodeTabKeyDown = (event: React.KeyboardEvent, index: number) => {
+    const next =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? 1
+          : event.key === "ArrowRight"
+            ? (index + 1) % 2
+            : event.key === "ArrowLeft"
+              ? (index - 1 + 2) % 2
+              : null
+    if (next === null) return
+    event.preventDefault()
+    selectCodeSurface(next === 0 ? "session" : "changes", true)
+  }
   const announcement = playback.isComplete
     ? "Demo complete"
     : `${currentStage.label}: ${currentStep.kind === "tool" ? currentStep.label : currentStep.kind === "observation" ? "Observation" : "Hena response"}${playback.isPaused ? ", paused" : ""}`
@@ -239,7 +259,14 @@ function ProjectPanel({
                 {playback.isPaused ? "Resume" : "Pause"}
               </button>
             )}
-            <button type="button" onClick={playback.replay} disabled={playback.reducedMotion}>
+            <button
+              type="button"
+              onClick={() => {
+                if (project.id === "code") setCodeSurface("session")
+                playback.replay()
+              }}
+              disabled={playback.reducedMotion}
+            >
               <RotateCcw size={12} aria-hidden="true" /> Replay
             </button>
           </div>
@@ -252,37 +279,54 @@ function ProjectPanel({
             complete={playback.isComplete}
             paused={playback.isPaused}
           />
+        ) : project.id === "code" ? (
+          <div className="code-surfaces">
+            <div className="mode-tabs" role="tablist" aria-label="Code session views">
+              <button
+                type="button"
+                role="tab"
+                id={`${baseId}-code-session-tab`}
+                aria-selected={codeSurface === "session"}
+                aria-controls={`${baseId}-code-session`}
+                tabIndex={codeSurface === "session" ? 0 : -1}
+                onClick={() => selectCodeSurface("session")}
+                onKeyDown={(event) => handleCodeTabKeyDown(event, 0)}
+              >
+                Session
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id={`${baseId}-code-changes-tab`}
+                aria-selected={codeSurface === "changes"}
+                aria-controls={`${baseId}-code-changes`}
+                tabIndex={codeSurface === "changes" ? 0 : -1}
+                onClick={() => selectCodeSurface("changes")}
+                onKeyDown={(event) => handleCodeTabKeyDown(event, 1)}
+              >
+                Changes
+              </button>
+            </div>
+            <div
+              className="code-session-view"
+              id={`${baseId}-code-session`}
+              role="tabpanel"
+              aria-labelledby={`${baseId}-code-session-tab`}
+              data-active={codeSurface === "session"}
+            >
+              <PreviewConversation project={project} playback={playback} />
+            </div>
+            <CodeChanges
+              stageIndex={playback.stageIndex}
+              stepIndex={playback.stepIndex}
+              complete={playback.isComplete}
+              active={codeSurface === "changes"}
+              id={`${baseId}-code-changes`}
+              labelledBy={`${baseId}-code-changes-tab`}
+            />
+          </div>
         ) : (
-          <Conversation className="session-thread" key={`${project.id}-${playback.run}`}>
-            <ConversationContent>
-              <Message from="user">
-                <MessageContent>
-                  <span className="message-avatar">SK</span>
-                  <div>
-                    <p className="message-author">You</p>
-                    <p>{project.title}</p>
-                  </div>
-                </MessageContent>
-              </Message>
-              <Message from="assistant">
-                <MessageContent>
-                  <span className="message-avatar message-avatar--hena">H</span>
-                  <div>
-                    <p className="message-author">Hena</p>
-                    <Activity
-                      project={project}
-                      stageIndex={playback.stageIndex}
-                      stepIndex={playback.stepIndex}
-                      stepProgress={playback.stepProgress}
-                      complete={playback.isComplete}
-                      paused={playback.isPaused}
-                    />
-                  </div>
-                </MessageContent>
-              </Message>
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
+          <PreviewConversation project={project} playback={playback} />
         )}
         <span className="sr-only" aria-live="polite">
           {announcement}
@@ -306,6 +350,184 @@ function ProjectPanel({
         )}
       </section>
     </div>
+  )
+}
+
+function PreviewConversation({
+  project,
+  playback,
+}: {
+  project: PreviewProject
+  playback: ReturnType<typeof usePreviewPlayback>
+}) {
+  return (
+    <Conversation className="session-thread" key={`${project.id}-${playback.run}`}>
+      <ConversationContent>
+        <Message from="user">
+          <MessageContent>
+            <span className="message-avatar">SK</span>
+            <div>
+              <p className="message-author">You</p>
+              <p>{project.title}</p>
+            </div>
+          </MessageContent>
+        </Message>
+        <Message from="assistant">
+          <MessageContent>
+            <span className="message-avatar message-avatar--hena">H</span>
+            <div>
+              <p className="message-author">Hena</p>
+              <Activity
+                project={project}
+                stageIndex={playback.stageIndex}
+                stepIndex={playback.stepIndex}
+                stepProgress={playback.stepProgress}
+                complete={playback.isComplete}
+                paused={playback.isPaused}
+              />
+            </div>
+          </MessageContent>
+        </Message>
+      </ConversationContent>
+      <ConversationScrollButton />
+    </Conversation>
+  )
+}
+
+const sourceFiles = [
+  ["src/agents/context-loader.ts", "+30", "-6"],
+  ["src/agents/run-context.ts", "+12", "-2"],
+] as const
+
+const testFiles = [
+  {
+    path: "tests/context-isolation.test.ts",
+    additions: "+30",
+    deletions: "-2",
+    excerpt: [
+      'it("keeps organization context isolated", async () => {',
+      '  const context = await loadContext({ organizationId: "missing" })',
+      "  expect(context.organization).toBeUndefined()",
+      "})",
+    ],
+  },
+  {
+    path: "tests/context-loader.test.ts",
+    additions: "+14",
+    deletions: "-2",
+    excerpt: [
+      'it("does not reuse another organization", async () => {',
+      "  expect(await loadContext(scope)).not.toEqual(otherContext)",
+      "})",
+    ],
+  },
+] as const
+
+export function CodeChanges({
+  stageIndex,
+  stepIndex,
+  complete,
+  active = true,
+  id,
+  labelledBy,
+}: {
+  stageIndex: number
+  stepIndex: number
+  complete: boolean
+  active?: boolean
+  id?: string
+  labelledBy?: string
+}) {
+  const loaderComplete = complete || stageIndex > 1 || (stageIndex === 1 && stepIndex >= 2)
+  const testsComplete = complete || stageIndex > 1 || (stageIndex === 1 && stepIndex >= 3)
+  return (
+    <section
+      className={cn("code-changes", !active && "code-changes--desktop")}
+      id={id}
+      role="tabpanel"
+      aria-label="Code changes"
+      aria-labelledby={labelledBy}
+      data-active={active}
+    >
+      <div className="code-changes__header">
+        <div>
+          <span className="preview-eyebrow">Changes</span>
+          <strong>{loaderComplete ? "Working tree" : "No changes yet"}</strong>
+        </div>
+        {loaderComplete && (
+          <span className="code-changes__total">{testsComplete ? "+86 / -12" : "+42 / -8"}</span>
+        )}
+      </div>
+      {!loaderComplete ? (
+        <div className="code-changes__empty">
+          <Braces size={17} aria-hidden="true" />
+          <strong>Changes will appear here</strong>
+          <span>Waiting for the context loader to finish.</span>
+        </div>
+      ) : (
+        <div className="code-changes__body">
+          <p className="code-changes__caption">
+            Selected excerpts · {testsComplete ? "4" : "2"} files
+          </p>
+          <ul className="code-file-list" aria-label="Changed files">
+            {sourceFiles.map(([file, additions, deletions]) => (
+              <li key={file}>
+                <FileText size={13} aria-hidden="true" />
+                <span>{file}</span>
+                <small>
+                  {additions} {deletions}
+                </small>
+              </li>
+            ))}
+            {testsComplete &&
+              testFiles.map((file) => (
+                <li key={file.path}>
+                  <FileText size={13} aria-hidden="true" />
+                  <span>{file.path}</span>
+                  <small>
+                    {file.additions} {file.deletions}
+                  </small>
+                </li>
+              ))}
+          </ul>
+          <section className="code-diff" aria-label="Unified diff excerpt">
+            <span className="code-diff__file">src/agents/context-loader.ts</span>
+            <code>
+              <i>@@ context assembly @@</i>
+            </code>
+            <code className="code-diff__removed">- const project = await loadProject(scope)</code>
+            <code className="code-diff__added">
+              + const organization = await loadOrganization(scope)
+            </code>
+            <code className="code-diff__added">+ const project = await loadProject(scope)</code>
+            <code> const repository = await loadRepository(project)</code>
+            <code className="code-diff__added">+ return [organization, project, repository]</code>
+          </section>
+          {testsComplete &&
+            testFiles.map((file) => (
+              <details className="code-test-file" key={file.path}>
+                <summary>
+                  <span>
+                    <Check size={13} aria-hidden="true" />{" "}
+                    <span title={file.path}>{file.path}</span>
+                  </span>
+                  <small>
+                    {file.additions} {file.deletions}
+                  </small>
+                </summary>
+                {file.excerpt.map((line) => (
+                  <code key={line}>{line}</code>
+                ))}
+              </details>
+            ))}
+          <div className={cn("code-verification", complete && "is-complete")}>
+            <span className="status-dot" aria-hidden="true" />
+            <span>{complete ? "Verified" : "Verification pending"}</span>
+            {complete && <strong>37 passed</strong>}
+          </div>
+        </div>
+      )}
+    </section>
   )
 }
 

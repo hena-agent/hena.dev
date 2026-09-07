@@ -3,7 +3,35 @@
   "name": "hena-dev",
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-05-06",
-  "compatibility_flags": []
-  // D1 DB binding is pending: the current token cannot access D1.
-  // Add verified production/preview database IDs before enabling the waitlist.
+  "compatibility_flags": [],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hena-waitlist",
+      "database_id": "a9661be0-81da-48fc-8653-cc087211004f",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "SITE_URL": "https://hena.dev",
+    "CONSENT_VERSION": "2026-09-05",
+    "RESEND_FROM_EMAIL": "Hena <updates@hena.dev>"
+  },
+  "env": {
+    "preview": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "hena-waitlist-preview",
+          "database_id": "048558b9-c790-4cb5-8457-2ca8d12374b2",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": {
+        "SITE_URL": "https://preview.hena-dev.pages.dev",
+        "CONSENT_VERSION": "2026-09-05",
+        "RESEND_FROM_EMAIL": "Hena <updates@hena.dev>"
+      }
+    }
+  }
 }

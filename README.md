@@ -43,9 +43,11 @@ Only `use-stick-to-bottom` is added at runtime; no AI SDK or Markdown rendering 
 `wrangler.jsonc` targets the existing `hena-dev` Pages project. Select the **chris** account
 with `CLOUDFLARE_ACCOUNT_ID`; Pages configuration does not support `account_id`.
 Its compatibility date matches the existing production and preview settings.
-The configuration is not yet waitlist-ready: D1 access is currently blocked by token
-permissions, and no `DB` binding or runtime secrets have been provisioned.
-Do not deploy the waitlist until the setup below is complete.
+D1 databases, migrations, and Turnstile widgets/secrets are provisioned for production
+and preview. Pages project settings and this configuration both define the `DB` bindings.
+Changes to these settings require a new deployment to take effect.
+Registration still requires `RESEND_API_KEY` and an authenticated sender domain. Until
+Resend is configured, the existing signup endpoint intentionally returns 503.
 
 ### Authentication
 
@@ -62,21 +64,29 @@ export CLOUDFLARE_ACCOUNT_ID=0c789b636217d3b7562fb404aa580b58
 GitHub Actions supplies this environment variable through the existing
 `CLOUDFLARE_ACCOUNT_ID` repository secret.
 
-The token needs **Account / Cloudflare Pages / Edit** and **Account / D1 / Edit** for
+The token needs **Account / Cloudflare Pages / Edit**, **Account / D1 / Edit**, and
+**Account / Turnstile / Edit** for
 the chris account. A successful `whoami` does not prove those permissions are present.
 
-### Provisioning checklist
+### Environments
 
-1. Grant D1 access, then list existing databases before creating any.
-2. Create or select `hena-waitlist` and a separate preview database.
-3. Add `d1_databases` entries with binding `DB`, verified `database_id` values, and
-   `migrations_dir: "migrations"` to `wrangler.jsonc`; use `env.preview` for the isolated DB.
-4. Apply the schema to both databases using their explicit environment selections.
-5. Configure production Turnstile and Resend secrets below. Do not share production
-   credentials or subscriber data with preview deployments.
-6. Register GitHub Actions secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
-   for this same account, plus the public build variables below.
-7. Verify registration, mail delivery, and unsubscription before deploying to production.
+| Environment | D1 database | Turnstile public site key | Widget hostnames |
+| --- | --- | --- | --- |
+| Production | `hena-waitlist` | `0x4AAAAAAErAnxtRES4Ssc08` | `hena.dev`, `www.hena.dev` |
+| Preview | `hena-waitlist-preview` | `0x4AAAAAAErAoSqCMV9VjqJs` | `hena-dev.pages.dev` and its subdomains |
+
+Turnstile secret keys are stored only in the respective Pages environment as
+`TURNSTILE_SECRET_KEY`. The production public key is registered in the GitHub Actions
+variable `PUBLIC_TURNSTILE_SITE_KEY`; public site keys are not secrets.
+
+For a preview build, explicitly set `PUBLIC_TURNSTILE_SITE_KEY` to the preview key and
+deploy with `--branch=preview`. Its stable origin is `https://preview.hena-dev.pages.dev`,
+used by `env.preview.vars.SITE_URL` for unsubscribe links. Do not use the production build
+artifact for preview, or production credentials/subscriber data for testing.
+
+Before enabling signup, configure Resend in the appropriate Pages environment, verify
+the sender domain, and test registration, delivery, and unsubscribe end to end. The current
+production deployment workflow does not automatically apply future D1 migrations.
 
 Wrangler configuration becomes the source of truth for bindings on deployment; it does
 not provision a database or update a running deployment merely by existing on disk.
@@ -103,9 +113,10 @@ After creating and binding the D1 database, apply the schema:
 
 ```sh
 node node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --remote
+node node_modules/wrangler/bin/wrangler.js d1 migrations apply DB --remote --env preview
 ```
 
 Copy `.env.example` and `.dev.vars.example` for local configuration. Use Cloudflare's published
 Turnstile test keys during local development, never production credentials. After building,
-`bun run cf:dev` serves Pages Functions as well as the site. Local D1 testing requires the
-pending `DB` configuration and local migrations (`d1 migrations apply DB --local`).
+`bun run cf:dev` serves Pages Functions as well as the site. Local D1 testing requires
+local migrations (`d1 migrations apply DB --local`); local state is separate from remote D1.

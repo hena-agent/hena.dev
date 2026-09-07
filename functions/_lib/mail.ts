@@ -14,6 +14,7 @@ export async function sendConfirmation(env: Env, options: ConfirmationOptions) {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
@@ -44,7 +45,6 @@ export async function sendConfirmation(env: Env, options: ConfirmationOptions) {
   })
 
   if (!response.ok) {
-    const detail = await response.text()
-    throw new Error(`Resend request failed (${response.status}): ${detail}`)
+    throw new Error(`Resend request failed (${response.status})`)
   }
 }

@@ -1,3 +1,4 @@
+import { notifyDiscord } from "../_lib/discord"
 import { createToken, hashToken, isEmail, json } from "../_lib/http"
 import { sendConfirmation } from "../_lib/mail"
 import type { PagesContext } from "../_lib/types"
@@ -12,11 +13,17 @@ interface Subscriber {
   status: "pending" | "subscribed" | "unsubscribed"
 }
 
+interface ClaimedSubscriber extends Subscriber {
+  unsubscribed_at: string | null
+}
+
 interface TurnstileResult {
   success: boolean
 }
 
-export async function onRequestPost({ request, env }: PagesContext) {
+const CLAIM_LEASE_MS = 60_000
+
+export async function onRequestPost({ request, env, waitUntil }: PagesContext) {
   if (!env.DB || !env.TURNSTILE_SECRET_KEY || !env.RESEND_API_KEY) {
     return json({ message: "Waitlist service is not configured." }, 503)
   }
@@ -71,8 +78,10 @@ export async function onRequestPost({ request, env }: PagesContext) {
   const unsubscribeToken = createToken()
   const unsubscribeTokenHash = await hashToken(unsubscribeToken)
   const now = new Date().toISOString()
+  const leaseCutoff = new Date(Date.now() - CLAIM_LEASE_MS).toISOString()
 
-  await env.DB.prepare(
+  // Claim the email atomically so concurrent requests cannot rotate an in-flight link.
+  const claimed = await env.DB.prepare(
     `INSERT INTO waitlist_subscribers (
       email, status, consent_version, unsubscribe_token_hash, created_at, updated_at, unsubscribed_at
     ) VALUES (?, 'pending', ?, ?, ?, ?, NULL)
@@ -80,24 +89,61 @@ export async function onRequestPost({ request, env }: PagesContext) {
       status = 'pending',
       consent_version = excluded.consent_version,
       unsubscribe_token_hash = excluded.unsubscribe_token_hash,
-      updated_at = excluded.updated_at,
-      unsubscribed_at = NULL`,
+      updated_at = excluded.updated_at
+    WHERE waitlist_subscribers.status = 'unsubscribed'
+       OR (waitlist_subscribers.status = 'pending' AND waitlist_subscribers.updated_at <= ?)
+    RETURNING status, unsubscribed_at`,
   )
-    .bind(email, currentConsentVersion, unsubscribeTokenHash, now, now)
-    .run()
+    .bind(email, currentConsentVersion, unsubscribeTokenHash, now, now, leaseCutoff)
+    .first<ClaimedSubscriber>()
+
+  if (!claimed) {
+    const current = await env.DB.prepare("SELECT status FROM waitlist_subscribers WHERE email = ?")
+      .bind(email)
+      .first<Subscriber>()
+    if (current?.status === "subscribed") {
+      return json({ message: "You’re already on the list. We’ll keep you posted." })
+    }
+    return json({ message: "A confirmation is already being sent. Please try again shortly." }, 409)
+  }
 
   try {
     await sendConfirmation(env, { email, unsubscribeToken })
-  } catch (error) {
-    console.error("Could not send waitlist confirmation", error)
+  } catch {
+    await env.DB.prepare(
+      `UPDATE waitlist_subscribers
+       SET updated_at = ?
+       WHERE email = ? AND status = 'pending' AND unsubscribe_token_hash = ?`,
+    )
+      .bind(leaseCutoff, email, unsubscribeTokenHash)
+      .run()
+    console.error("Waitlist confirmation delivery failed")
     return json({ message: "Confirmation email could not be sent. Please try again." }, 503)
   }
 
-  await env.DB.prepare(
-    "UPDATE waitlist_subscribers SET status = 'subscribed', updated_at = ? WHERE email = ?",
+  const subscribed = await env.DB.prepare(
+    `UPDATE waitlist_subscribers
+     SET status = 'subscribed', updated_at = ?, unsubscribed_at = NULL
+     WHERE email = ? AND status = 'pending' AND unsubscribe_token_hash = ?`,
   )
-    .bind(new Date().toISOString(), email)
+    .bind(new Date().toISOString(), email, unsubscribeTokenHash)
     .run()
+
+  if (subscribed.meta.changes !== 1) {
+    return json({ message: "Your confirmation could not be completed. Please try again." }, 409)
+  }
+
+  if (env.DISCORD_WEBHOOK_URL) {
+    waitUntil(
+      notifyDiscord(env, {
+        email,
+        kind: claimed.unsubscribed_at ? "resubscribe" : "new",
+        timestamp: new Date().toISOString(),
+      }).catch(() => {
+        console.error("Waitlist Discord notification failed")
+      }),
+    )
+  }
 
   return json({ message: "We’ll email you with beta and launch updates." }, 201)
 }

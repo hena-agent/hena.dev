@@ -3,3 +3,5 @@ RESEND_API_KEY=re_your_resend_api_key
 RESEND_FROM_EMAIL=Hena <updates@hena.dev>
 SITE_URL=http://localhost:8788
 CONSENT_VERSION=2026-09-05
+# Optional local-only Discord notification webhook. Leave unset to disable notifications.
+# DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...

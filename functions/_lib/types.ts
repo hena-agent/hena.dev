@@ -22,9 +22,11 @@ export interface Env {
   RESEND_FROM_EMAIL?: string
   SITE_URL?: string
   CONSENT_VERSION?: string
+  DISCORD_WEBHOOK_URL?: string
 }
 
 export interface PagesContext {
   request: Request
   env: Env
+  waitUntil: (promise: Promise<unknown>) => void
 }

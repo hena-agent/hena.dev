@@ -101,6 +101,22 @@ The Pages project needs the following production resources and bindings:
 | Variable | `RESEND_FROM_EMAIL` | Defaults to `Hena <updates@hena.dev>` |
 | Variable | `SITE_URL` | Defaults to `https://hena.dev` |
 | Variable | `CONSENT_VERSION` | Must match `src/data/site.ts` |
+| Secret | `DISCORD_WEBHOOK_URL` | Optional Discord signup notifications; must be an HTTPS `discord.com/api/webhooks/` URL |
+
+Configure `DISCORD_WEBHOOK_URL` separately as a Pages secret in any environment that should receive
+notifications. Use a restricted-access channel: alerts contain the full email address, registration
+time, signup/rejoin type, and environment. Never reuse the production webhook in preview.
+An unset webhook disables notifications without affecting signup. Alerts run through `waitUntil`
+only after confirmation mail succeeds and D1 transitions to `subscribed`. Discord failures and
+rate limits are logged without sensitive values; there is a five-second timeout and no automatic
+retry or guaranteed delivery. D1 remains the source of truth. Resend is still mandatory.
+
+Concurrent signup attempts use a 60-second claim lease; an active claim returns 409, and failed
+mail delivery releases it for retry. A token-hash guard prevents stale requests from finalizing
+another request's subscription or sending its notification. No database migration is required.
+
+If a Pages runtime override changes `SITE_URL` or `CONSENT_VERSION`, keep it aligned
+with the environment's intended origin and `src/data/site.ts` before deploying.
 
 The Astro build reads these GitHub Actions repository variables:
 

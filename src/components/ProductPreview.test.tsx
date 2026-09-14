@@ -14,6 +14,23 @@ test("SSR renders the completed transcript with scoped state classes", () => {
   expect(html).not.toContain("activity-pending")
 })
 
+test("shows model and runtime choices before interaction and explains context continuity", () => {
+  const html = renderToStaticMarkup(<ProductPreview />)
+  expect(html).toContain("Choose your model")
+  expect(html).toContain("Claude Sonnet")
+  expect(html).toContain("GPT Codex")
+  expect(html).toContain("Gemini Pro")
+  expect(html).toContain("Switch anytime. Keep the project.")
+  expect(html).toContain("Chat context updates as you work")
+  expect(html).toContain(
+    "Hena updates notes, decisions, and research as the conversation develops.",
+  )
+  expect(html).toContain(">Cloud<")
+  expect(html).toContain(">Local<")
+  expect(html).toContain('aria-pressed="true"')
+  expect(html).toContain('aria-pressed="false"')
+})
+
 test("SSR keeps prose in the transcript and scopes disclosures to tools", () => {
   const html = renderToStaticMarkup(<ProductPreview />)
   const readableHtml = html.replaceAll("&#x27;", "'")

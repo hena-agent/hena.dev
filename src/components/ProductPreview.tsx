@@ -1,11 +1,14 @@
 import {
   Braces,
+  Brain,
   Check,
   ChevronDown,
   Clock3,
+  Cloud,
   FileText,
   Folder,
   Globe2,
+  HardDrive,
   MessageSquareText,
   Pause,
   Play,
@@ -31,10 +34,23 @@ import {
 import { cn } from "@/lib/utils"
 
 const icons = { chat: MessageSquareText, code: Braces, claw: Globe2 }
+const models = ["Claude Sonnet", "GPT Codex", "Gemini Pro"] as const
+const runtimes = ["Cloud", "Local"] as const
+type Model = (typeof models)[number]
+type Runtime = (typeof runtimes)[number]
+
+const projectContext = {
+  chat: "Hena updates notes, decisions, and research as the conversation develops.",
+  code: "Hena follows repository rules, code changes, and verified test results.",
+  claw: "Hena updates routine state, exceptions, and results after every run.",
+} as const
 
 export function ProductPreview() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [railOrientation, setRailOrientation] = useState<"vertical" | "horizontal">("vertical")
+  const [model, setModel] = useState<Model>(models[0])
+  const [runtime, setRuntime] = useState<Runtime>(runtimes[0])
+  const [modelSwitched, setModelSwitched] = useState(false)
   const baseId = useId()
   const active = projects[activeIndex]
   useEffect(() => {
@@ -47,6 +63,10 @@ export function ProductPreview() {
   const selectProject = (index: number, focus = false) => {
     setActiveIndex(index)
     if (focus) document.getElementById(`${baseId}-project-${projects[index].id}`)?.focus()
+  }
+  const selectModel = (nextModel: Model) => {
+    if (nextModel !== model) setModelSwitched(true)
+    setModel(nextModel)
   }
   const handleKeyDown = (event: React.KeyboardEvent, index: number) => {
     const next =
@@ -84,6 +104,58 @@ export function ProductPreview() {
           <span />
           <span />
         </div>
+      </div>
+      <div className="preview-workspace-controls">
+        <div className="preview-model-picker">
+          <div className="preview-control-label">
+            <span>Choose your model</span>
+            <small>Switch anytime. Keep the project.</small>
+          </div>
+          <fieldset className="preview-model-options">
+            <legend className="sr-only">Model used in this preview</legend>
+            {models.map((item) => (
+              <button
+                type="button"
+                aria-pressed={model === item}
+                onClick={() => selectModel(item)}
+                key={item}
+              >
+                <span aria-hidden="true">{item.charAt(0)}</span>
+                {item}
+              </button>
+            ))}
+          </fieldset>
+        </div>
+        <div className="preview-context-state" aria-live="polite">
+          <Brain size={15} aria-hidden="true" />
+          <p>
+            <strong>
+              {modelSwitched
+                ? "Model switched · context retained"
+                : `${active.label} context updates as you work`}
+            </strong>
+            <span>{projectContext[active.id]}</span>
+          </p>
+        </div>
+        <fieldset className="preview-runtime-picker">
+          <legend>Run on</legend>
+          <div>
+            {runtimes.map((item) => {
+              const RuntimeIcon = item === "Cloud" ? Cloud : HardDrive
+              return (
+                <button
+                  type="button"
+                  aria-pressed={runtime === item}
+                  onClick={() => setRuntime(item)}
+                  key={item}
+                >
+                  <RuntimeIcon size={12} aria-hidden="true" />
+                  {item}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
       </div>
       <div className="preview-body preview-body--projects">
         <nav className="project-rail" aria-label="Projects">
@@ -125,6 +197,8 @@ export function ProductPreview() {
             activeIndex={activeIndex}
             baseId={baseId}
             active={activeIndex === projectIndex}
+            model={model}
+            runtime={runtime}
           />
         ))}
       </div>
@@ -138,12 +212,16 @@ function ProjectPanel({
   activeIndex,
   baseId,
   active,
+  model,
+  runtime,
 }: {
   project: PreviewProject
   projectIndex: number
   activeIndex: number
   baseId: string
   active: boolean
+  model: Model
+  runtime: Runtime
 }) {
   const Icon = icons[project.id]
   const hostRef = useRef<HTMLElement>(null)
@@ -210,8 +288,12 @@ function ProjectPanel({
           ))}
         </nav>
         <div className="sidebar-local">
-          <span className="status-dot" aria-hidden="true" />
-          Running locally
+          {runtime === "Cloud" ? (
+            <Cloud size={12} aria-hidden="true" />
+          ) : (
+            <HardDrive size={12} aria-hidden="true" />
+          )}
+          Running in {runtime.toLowerCase()}
         </div>
       </aside>
       <section
@@ -343,7 +425,7 @@ function ProjectPanel({
           <div className="composer" aria-hidden="true">
             <span>Continue this session…</span>
             <div className="composer-controls">
-              <span>{project.label} agent</span>
+              <span>{model}</span>
               <span className="composer-submit">↑</span>
             </div>
           </div>

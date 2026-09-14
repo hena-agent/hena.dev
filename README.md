@@ -27,6 +27,8 @@ Claw shows a saved weekly invoice routine with per-service progress, duplicate h
 missing-invoice flags, and the next scheduled run rather than a chat transcript.
 
 Each project starts once when visible and preserves its progress when switching projects.
+The shared controls keep all supported models visible, allow model and runtime switching, and show
+that each project's evolving context remains attached across those switches.
 Pause, Resume, and Replay control playback. Leaving the viewport or hiding the browser tab
 pauses playback; reduced-motion users see the completed example instead. In Chat and Code,
 scrolling up stops automatic following until the user returns to the latest activity.

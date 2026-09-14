@@ -1,9 +1,9 @@
 export const site = {
   url: "https://hena.dev",
   name: "Hena",
-  title: "Hena — One workspace for chat, code, and autonomous work",
+  title: "Hena — Chat, code, and automate in one workspace",
   description:
-    "A local, open-source AI workspace that routes every task to the right model. Desktop beta arrives September 2026.",
+    "An open-source AI workspace for chat, code, and automated work. Hena keeps project context up to date across models, sessions, and local or cloud execution.",
   email: "hi@hena.dev",
   launch: "September 2026",
   company: "Ambivalent Co.",

@@ -14,6 +14,10 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // Avoid reusing a production React prebundle in `astro dev` after build/dev overlap.
+    optimizeDeps: {
+      force: true,
+    },
     server: {
       allowedHosts: ["hena-dev.localhost", ".pug-mohs.ts.net"],
     },
